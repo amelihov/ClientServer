@@ -1,0 +1,85 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Web Sockets Test</title>
+    <meta charset="utf-8" />
+    <script
+        src="https://code.jquery.com/jquery-3.2.1.min.js"
+        integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+    
+    <style>
+        .formRow { padding: 3px; }
+        .formRow label { display: inline-block; width: 5em; }
+        .formRow input { width: 30em;}
+        .formRow button { width: 10em; }
+        #statusGoesHere { color: red; }
+    </style>
+</head>
+<body>
+
+    <h1>Your first name:</h1>
+    <div class="formRow">
+        <input id="nameClient" type="text" placeholder="Incognito"/>
+        <button id="sendSubscribeButton" onclick="connect()">Connect</button>
+    </div>
+
+    <h1>Web Sockets Client</h1>
+    <div class="formRow">
+        <label>Web socket:</label>
+        <input id="wsUrl" type="text" placeholder="ws://127.0.0.1:5503/ws"/>
+    </div>
+
+<input type=text id="textInput" placeholder="Enter your text"/>
+<button id="sendButton">Send</button>
+
+<ul id="messages"></ul>
+
+    <script language="javascript" type="text/javascript">
+
+    var uri = "ws://127.0.0.1:5503/ws";
+    function connect() {
+        socket = new WebSocket(uri);
+        var element = document.getElementById("nameClient");
+        element.setAttribute("disabled", "true");
+        const name = $("#nameClient").val();
+        socket.onopen = function(event) {
+            console.log("opened connection to " + uri);
+                        var subscribe = "{\"TimeFrom\":\"" + new Date().toUTCString() + "\",\"Type\":\"Subscribe\",\"Name\":\"" + name + "\",\"Body\":\"Hi\"}";
+            socket.send(subscribe);
+        };
+        socket.onclose = function(event) {
+            console.log("closed connection from " + uri);
+        };
+        socket.onmessage = function(event) {
+            const obj = JSON.parse(event.data);
+            appendItem(list, obj);
+            console.log(event.data);
+        };
+        socket.onerror = function(event) {
+            console.log("error: " + event.data);
+        };
+    }
+
+    var list = document.getElementById("messages");
+    var button = document.getElementById("sendButton");
+    button.addEventListener("click", function() {
+
+        var input = document.getElementById("textInput");
+        sendMessage(input.value);
+    });
+
+    function sendMessage(message) {
+        const name = $("#nameClient").val();
+        console.log("Sending: " + message);
+        var network = "{\"TimeFrom\":\"" + new Date().toUTCString() + "\",\"Type\":\"Network\",\"Name\":\"" + name + "\",\"Body\":\"" + message + "\"}";
+        socket.send(network);
+    }
+    function appendItem(list, message) {
+        var item = document.createElement("li");
+        item.appendChild(document.createTextNode(message.TimeFrom + '[' + message.Name + ']' + ':' + message.Body));
+        list.appendChild(item);
+    }
+</script>
+</body>
+</html>
